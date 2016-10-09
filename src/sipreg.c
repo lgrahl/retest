@@ -33,15 +33,21 @@ static void exit_handler(void *arg)
 
 static int sipstack_fixture(struct sip **sipp)
 {
-	struct sa laddr, laddrs;
+	struct sa laddr, laddrs, dns;
 	struct sip *sip = NULL;
 	struct tls *tls = NULL;
+	struct dnsc *dnsc = NULL;
 	int err;
 
 	(void)sa_set_str(&laddr, "127.0.0.1", LOCAL_PORT);
 	(void)sa_set_str(&laddrs, "127.0.0.1", LOCAL_SECURE_PORT);
+	sa_set_str(&dns, "127.0.0.1", 53);    /* note: unused */
 
-	err = sip_alloc(&sip, NULL, 32, 32, 32, "retest", exit_handler, NULL);
+	err = dnsc_alloc(&dnsc, NULL, &dns, 1);
+	if (err)
+		goto out;
+
+	err = sip_alloc(&sip, dnsc, 32, 32, 32, "retest", exit_handler, NULL);
 	if (err)
 		goto out;
 
@@ -59,9 +65,20 @@ static int sipstack_fixture(struct sip **sipp)
 	err |= sip_transp_add(sip, SIP_TRANSP_TLS, &laddrs, tls);
 	if (err)
 		goto out;
+
+	err = sip_transp_add_websock(sip, SIP_TRANSP_WSS,
+				     &laddr, false, NULL);
+	if (err)
+		goto out;
 #endif
 
+	err = sip_transp_add_websock(sip, SIP_TRANSP_WS,
+				     &laddr, false, NULL);
+	if (err)
+		goto out;
+
  out:
+	mem_deref(dnsc);
 	mem_deref(tls);
 	if (err)
 		mem_deref(sip);
@@ -168,3 +185,15 @@ int test_sipreg_tls(void)
 	return reg_test(SIP_TRANSP_TLS);
 }
 #endif
+
+
+int test_sipreg_ws(void)
+{
+	return reg_test(SIP_TRANSP_WS);
+}
+
+
+int test_sipreg_wss(void)
+{
+	return reg_test(SIP_TRANSP_WSS);
+}

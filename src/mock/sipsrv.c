@@ -99,7 +99,19 @@ int sip_server_alloc(struct sip_server **srvp)
 		goto out;
 
 	err |= sip_transp_add(srv->sip, SIP_TRANSP_TLS, &laddrs, tls);
+	if (err)
+		goto out;
+
+	err = sip_transp_add_websock(srv->sip, SIP_TRANSP_WSS,
+				     &laddr, true, "./data/cert.pem");
+	if (err)
+		goto out;
 #endif
+	if (err)
+		goto out;
+
+	err = sip_transp_add_websock(srv->sip, SIP_TRANSP_WS,
+				     &laddr, true, NULL);
 	if (err)
 		goto out;
 

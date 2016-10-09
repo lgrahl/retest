@@ -188,7 +188,9 @@ int test_sipreg_udp(void);
 int test_sipreg_tcp(void);
 #ifdef USE_TLS
 int test_sipreg_tls(void);
+int test_sipreg_wss(void);
 #endif
+int test_sipreg_ws(void);
 int test_sipsess(void);
 int test_srtp(void);
 int test_srtcp(void);
